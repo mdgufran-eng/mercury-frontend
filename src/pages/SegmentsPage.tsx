@@ -1,13 +1,51 @@
 import { useQuery } from '@tanstack/react-query'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Lock,
+  Pencil,
+  X,
+  Check,
+  Brain,
+  Cpu,
+  AlertCircle,
+  Filter,
+} from 'lucide-react'
 import { getSegments, getJob, getProject } from '@/api/client'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
+import type { Segment } from '@/types'
+
+type FilterTab = 'ALL' | 'ICE' | 'MT' | 'REVIEW'
+
+interface SegmentState {
+  target: string
+  approved: boolean
+  locked: boolean
+  editing: boolean
+  draft: string
+}
+
+function buildInitialState(segments: Segment[]): Record<string, SegmentState> {
+  const map: Record<string, SegmentState> = {}
+  for (const s of segments) {
+    map[s.id] = {
+      target: s.target,
+      approved: s.status === 'CONFIRMED',
+      locked: s.status === 'CONFIRMED',
+      editing: false,
+      draft: s.target,
+    }
+  }
+  return map
+}
 
 export function SegmentsPage() {
   const { projectId, jobId } = useParams<{ projectId: string; jobId: string }>()
+  const [filter, setFilter] = useState<FilterTab>('ALL')
+  const [segState, setSegState] = useState<Record<string, SegmentState>>({})
+  const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
 
   const { data: project } = useQuery({
     queryKey: ['project', projectId],
@@ -27,85 +65,320 @@ export function SegmentsPage() {
     enabled: !!jobId,
   })
 
+  useEffect(() => {
+    if (segments && Object.keys(segState).length === 0) {
+      setSegState(buildInitialState(segments))
+    }
+  }, [segments])
+
+  function startEdit(id: string) {
+    setSegState((prev) => {
+      const s = prev[id]
+      if (!s || s.locked) return prev
+      return { ...prev, [id]: { ...s, editing: true, draft: s.target } }
+    })
+    setTimeout(() => textareaRefs.current[id]?.focus(), 50)
+  }
+
+  function cancelEdit(id: string) {
+    setSegState((prev) => {
+      const s = prev[id]
+      if (!s) return prev
+      return { ...prev, [id]: { ...s, editing: false, draft: s.target } }
+    })
+  }
+
+  function saveEdit(id: string) {
+    setSegState((prev) => {
+      const s = prev[id]
+      if (!s) return prev
+      return { ...prev, [id]: { ...s, editing: false, target: s.draft } }
+    })
+  }
+
+  function toggleApprove(id: string) {
+    setSegState((prev) => {
+      const s = prev[id]
+      if (!s) return prev
+      const nowApproved = !s.approved
+      return { ...prev, [id]: { ...s, approved: nowApproved, locked: nowApproved, editing: false } }
+    })
+  }
+
+  const iceCount = segments?.filter((s) => s.matchType === 'ICE').length ?? 0
+  const mtCount = segments?.filter((s) => s.matchType === 'MT').length ?? 0
+  const reviewCount = segments?.filter((s) => s.status === 'REVIEW').length ?? 0
+  const approvedCount = Object.values(segState).filter((s) => s.approved).length
+
+  const filtered = segments?.filter((s) => {
+    if (filter === 'ICE') return s.matchType === 'ICE'
+    if (filter === 'MT') return s.matchType === 'MT'
+    if (filter === 'REVIEW') return s.status === 'REVIEW'
+    return true
+  })
+
+  const tabs: { id: FilterTab; label: string; count: number }[] = [
+    { id: 'ALL', label: 'All', count: segments?.length ?? 0 },
+    { id: 'ICE', label: 'ICE', count: iceCount },
+    { id: 'MT', label: 'MT', count: mtCount },
+    { id: 'REVIEW', label: 'Review', count: reviewCount },
+  ]
+
   return (
-    <div className="p-8 max-w-6xl">
-      {/* Back */}
-      <div className="mb-5">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to={`/projects/${projectId}`} className="flex items-center gap-1.5 text-gray-500">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Project
-          </Link>
-        </Button>
+    <div className="p-6 max-w-6xl mx-auto space-y-5">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm text-gray-500">
+        <Link to="/projects" className="hover:text-indigo-400 transition-colors">Projects</Link>
+        <span>/</span>
+        <Link to={`/projects/${projectId}`} className="hover:text-indigo-400 transition-colors flex items-center gap-1">
+          <ArrowLeft className="w-3.5 h-3.5" />
+          {project?.name ?? 'Project'}
+        </Link>
+        <span>/</span>
+        <span className="text-gray-400 truncate max-w-xs">{job?.fileName ?? 'Segments'}</span>
       </div>
 
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {job?.fileName ?? 'Segments'}
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {project?.name} · {job?.sourceLang} → {job?.targetLang} ·{' '}
-          <span className="font-mono text-xs">{jobId}</span>
+      <div>
+        <h1 className="text-xl font-semibold text-gray-100">{job?.fileName ?? 'Segment Viewer'}</h1>
+        <p className="text-xs text-gray-500 mt-0.5">
+          {project?.name} ·{' '}
+          <span className="font-mono text-indigo-400">
+            {job?.sourceLang} → {job?.targetLang}
+          </span>{' '}
+          · {job?.wordCount?.toLocaleString()} words
         </p>
       </div>
 
-      {/* Segment stats */}
-      {segments && (
-        <div className="flex gap-4 mb-5 text-sm">
-          <span className="text-gray-500">
-            Total: <strong className="text-gray-800">{segments.length}</strong>
-          </span>
-          <span className="text-purple-600">
-            ICE: <strong>{segments.filter((s) => s.matchType === 'ICE').length}</strong>
-          </span>
-          <span className="text-orange-600">
-            MT: <strong>{segments.filter((s) => s.matchType === 'MT').length}</strong>
-          </span>
+      {/* Stats row */}
+      <div className="flex flex-wrap items-center gap-3">
+        <StatPill
+          icon={<Brain className="w-3.5 h-3.5" />}
+          label="ICE"
+          count={iceCount}
+          colorClass="bg-purple-500/10 text-purple-400 border-purple-500/20"
+        />
+        <StatPill
+          icon={<Cpu className="w-3.5 h-3.5" />}
+          label="MT"
+          count={mtCount}
+          colorClass="bg-orange-500/10 text-orange-400 border-orange-500/20"
+        />
+        <StatPill
+          icon={<AlertCircle className="w-3.5 h-3.5" />}
+          label="Review"
+          count={reviewCount}
+          colorClass="bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+        />
+        <StatPill
+          icon={<CheckCircle2 className="w-3.5 h-3.5" />}
+          label="Approved"
+          count={approvedCount}
+          colorClass="bg-green-500/10 text-green-400 border-green-500/20"
+        />
+        <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-600">
+          <Filter className="w-3.5 h-3.5" />
+          {approvedCount}/{segments?.length ?? 0} approved
         </div>
-      )}
+      </div>
 
-      {/* CAT-style table */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      {/* Filter tabs */}
+      <div className="flex gap-1 bg-[#13131f] border border-white/5 rounded-lg p-1 w-fit">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setFilter(tab.id)}
+            className={cn(
+              'px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5',
+              filter === tab.id
+                ? 'bg-indigo-600 text-white'
+                : 'text-gray-500 hover:text-gray-300 hover:bg-white/5',
+            )}
+          >
+            {tab.label}
+            <span className={cn(
+              'text-xs rounded-full px-1.5 py-0 leading-4',
+              filter === tab.id ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-600',
+            )}>
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* CAT table */}
+      <div className="bg-[#13131f] border border-white/5 rounded-xl overflow-hidden">
+        {/* Column headers */}
+        <div className="grid grid-cols-[3rem_1fr_1fr_7rem] border-b border-white/5 bg-[#0f0f1a]">
+          <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-center">No.</div>
+          <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Source</div>
+          <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Target</div>
+          <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-center">Status</div>
+        </div>
+
         {isLoading ? (
-          <div className="p-8 text-center text-gray-400 text-sm">Loading segments…</div>
-        ) : !segments || segments.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 text-sm">
-            No segments available for this job yet.
-          </div>
+          <div className="p-8 text-center text-gray-600 text-sm">Loading segments…</div>
+        ) : !filtered || filtered.length === 0 ? (
+          <div className="p-8 text-center text-gray-600 text-sm">No segments match this filter.</div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="w-12 font-semibold text-gray-600 text-center">No.</TableHead>
-                <TableHead className="font-semibold text-gray-600 w-[40%]">Source</TableHead>
-                <TableHead className="font-semibold text-gray-600 w-[40%]">Target</TableHead>
-                <TableHead className="font-semibold text-gray-600 text-center">Match</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {segments.map((segment) => (
-                <TableRow key={segment.id} className="align-top">
-                  <TableCell className="text-center text-gray-400 font-mono text-xs pt-4">
-                    {segment.no}
-                  </TableCell>
-                  <TableCell className="text-gray-700 text-sm leading-relaxed py-3">
-                    {segment.source}
-                  </TableCell>
-                  <TableCell className="text-gray-700 text-sm leading-relaxed py-3">
-                    {segment.target}
-                  </TableCell>
-                  <TableCell className="text-center py-3">
-                    <Badge variant={segment.matchType === 'ICE' ? 'purple' : 'orange'}>
-                      {segment.matchType}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="divide-y divide-white/5">
+            {filtered.map((seg) => {
+              const ss = segState[seg.id]
+              const isICE = seg.matchType === 'ICE'
+              const isApproved = ss?.approved ?? false
+              const isLocked = ss?.locked ?? false
+              const isEditing = ss?.editing ?? false
+              const isReview = seg.status === 'REVIEW'
+
+              return (
+                <div
+                  key={seg.id}
+                  className={cn(
+                    'grid grid-cols-[3rem_1fr_1fr_7rem] group transition-colors',
+                    isApproved ? 'bg-green-500/3' : 'hover:bg-white/2',
+                    isReview && !isApproved ? 'border-l-2 border-yellow-500/50' : '',
+                  )}
+                >
+                  {/* No. */}
+                  <div className="px-3 py-4 flex items-start justify-center">
+                    <span className="text-xs font-mono text-gray-600">{seg.no}</span>
+                  </div>
+
+                  {/* Source */}
+                  <div className="px-4 py-4">
+                    <p className="text-sm text-gray-300 leading-relaxed">{seg.source}</p>
+                  </div>
+
+                  {/* Target */}
+                  <div className="px-4 py-4">
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <textarea
+                          ref={(el) => { textareaRefs.current[seg.id] = el }}
+                          value={ss?.draft ?? ''}
+                          onChange={(e) =>
+                            setSegState((prev) => ({
+                              ...prev,
+                              [seg.id]: { ...prev[seg.id], draft: e.target.value },
+                            }))
+                          }
+                          rows={3}
+                          className="w-full bg-[#0a0a14] border border-indigo-500/50 rounded-md px-3 py-2 text-sm text-gray-200 leading-relaxed resize-none focus:outline-none focus:border-indigo-400 transition-colors"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => saveEdit(seg.id)}
+                            className="flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-md transition-colors"
+                          >
+                            <Check className="w-3 h-3" /> Save
+                          </button>
+                          <button
+                            onClick={() => cancelEdit(seg.id)}
+                            className="flex items-center gap-1 px-2.5 py-1 bg-white/5 hover:bg-white/10 text-gray-400 text-xs rounded-md transition-colors"
+                          >
+                            <X className="w-3 h-3" /> Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-2 group/target">
+                        <p
+                          className={cn(
+                            'text-sm leading-relaxed flex-1',
+                            isLocked ? 'text-gray-500' : 'text-gray-200',
+                          )}
+                        >
+                          {ss?.target ?? seg.target}
+                        </p>
+                        {!isLocked && (
+                          <button
+                            onClick={() => startEdit(seg.id)}
+                            className="opacity-0 group-hover/target:opacity-100 p-1 rounded hover:bg-white/10 text-gray-600 hover:text-gray-400 transition-all shrink-0 mt-0.5"
+                            title="Edit target"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Status col */}
+                  <div className="px-3 py-4 flex flex-col items-center gap-2">
+                    {/* Match badge */}
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full',
+                        isICE
+                          ? 'bg-purple-500/15 text-purple-300 border border-purple-500/20'
+                          : 'bg-orange-500/15 text-orange-300 border border-orange-500/20',
+                      )}
+                    >
+                      {isICE ? <Brain className="w-2.5 h-2.5" /> : <Cpu className="w-2.5 h-2.5" />}
+                      {seg.matchType}
+                    </span>
+
+                    {/* Review flag */}
+                    {isReview && !isApproved && (
+                      <span className="text-xs text-yellow-500 font-medium">Review</span>
+                    )}
+
+                    {/* Approve / lock button */}
+                    {isLocked ? (
+                      <button
+                        onClick={() => toggleApprove(seg.id)}
+                        className="flex items-center gap-1 text-xs text-green-400 hover:text-green-300 transition-colors"
+                        title="Unlock"
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => toggleApprove(seg.id)}
+                        className={cn(
+                          'flex items-center gap-1 text-xs px-2 py-0.5 rounded-md border transition-colors',
+                          isApproved
+                            ? 'border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20'
+                            : 'border-white/10 bg-white/3 text-gray-600 hover:border-indigo-500/40 hover:text-indigo-400',
+                        )}
+                        title={isApproved ? 'Approved — click to unlock' : 'Approve segment'}
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        {isApproved ? 'Approved' : 'Approve'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
+
+      <p className="text-xs text-gray-600">
+        Showing {filtered?.length ?? 0} of {segments?.length ?? 0} segments ·
+        Approve a segment to write it to Translation Memory
+      </p>
     </div>
+  )
+}
+
+function StatPill({
+  icon,
+  label,
+  count,
+  colorClass,
+}: {
+  icon: React.ReactNode
+  label: string
+  count: number
+  colorClass: string
+}) {
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border', colorClass)}>
+      {icon}
+      {label}
+      <span className="font-semibold">{count}</span>
+    </span>
   )
 }
