@@ -52,3 +52,50 @@ export const getFreelancers = (): Promise<Freelancer[]> => delay(dummyFreelancer
 
 // --- Translation Memory ---
 export const getTMEntries = (): Promise<TMEntry[]> => delay(dummyTMEntries)
+
+// --- Dashboard ---
+export interface DashboardStats {
+  totalProjects: number
+  activeProjects: number
+  finishedProjects: number
+  failedProjects: number
+  totalWords: number
+  billableWords: number
+  tmLeveragePct: number
+  totalSegments: number
+  iceSegments: number
+  mtSegments: number
+  byStatus: Record<string, number>
+  recentCallbacks: Callback[]
+  recentProjects: Project[]
+}
+
+export const getDashboardStats = (): Promise<DashboardStats> => {
+  const byStatus: Record<string, number> = {}
+  for (const p of dummyProjects) {
+    byStatus[p.status] = (byStatus[p.status] ?? 0) + 1
+  }
+
+  const totalWords = dummyJobs.reduce((s, j) => s + j.wordCount, 0)
+  const iceSegments = dummySegments.filter((s) => s.matchType === 'ICE').length
+  const mtSegments = dummySegments.filter((s) => s.matchType === 'MT').length
+  const totalSegments = dummySegments.length
+
+  const stats: DashboardStats = {
+    totalProjects: dummyProjects.length,
+    activeProjects: dummyProjects.filter((p) => p.status === 'ACTIVE' || p.status === 'IN_PROGRESS').length,
+    finishedProjects: dummyProjects.filter((p) => p.status === 'FINISHED').length,
+    failedProjects: dummyProjects.filter((p) => p.status === 'FAILED').length,
+    totalWords,
+    billableWords: dummyJobs.reduce((s, j) => s + Math.round(j.wordCount * 0.65), 0),
+    tmLeveragePct: totalSegments ? Math.round((iceSegments / totalSegments) * 100) : 0,
+    totalSegments,
+    iceSegments,
+    mtSegments,
+    byStatus,
+    recentCallbacks: [...dummyCallbacks].sort((a, b) => b.sentAt.localeCompare(a.sentAt)).slice(0, 6),
+    recentProjects: [...dummyProjects].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 4),
+  }
+
+  return delay(stats)
+}

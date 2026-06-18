@@ -9,6 +9,7 @@ import { CustomersPage } from '@/pages/CustomersPage'
 import { TemplatesPage } from '@/pages/TemplatesPage'
 import { FreelancersPage } from '@/pages/FreelancersPage'
 import { TMPage } from '@/pages/TMPage'
+import { DashboardPage } from '@/pages/DashboardPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,7 +26,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<AppShell />}>
-            <Route index element={<Navigate to="/projects" replace />} />
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
             <Route path="projects" element={<ProjectsPage />} />
             <Route path="projects/:projectId" element={<ProjectDetailPage />} />
             <Route path="projects/:projectId/jobs/:jobId/segments" element={<SegmentsPage />} />

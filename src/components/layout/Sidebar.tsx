@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import {
+  LayoutDashboard,
   FolderKanban,
   Bell,
   Users,
@@ -11,6 +12,7 @@ import {
 import { cn } from '@/lib/utils'
 
 const navItems = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/projects', label: 'Projects', icon: FolderKanban },
   { to: '/callbacks', label: 'Callbacks', icon: Bell },
   { to: '/customers', label: 'Customers', icon: Users },
@@ -56,7 +58,7 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-white/5">
-        <p className="text-xs text-gray-600">Babel TMS · Phase F0</p>
+        <p className="text-xs text-gray-600">Babel TMS · Phase F1</p>
       </div>
     </aside>
   )
