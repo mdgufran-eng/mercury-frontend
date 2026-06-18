@@ -6,7 +6,6 @@ import {
   XCircle,
   Zap,
   FileText,
-  Brain,
   Activity,
   ArrowRight,
   Clock,
@@ -80,7 +79,7 @@ export function DashboardPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          icon={<FolderKanban className="w-5 h-5 text-indigo-400" />}
+          icon={<FolderKanban className="w-5 h-5 text-[#9b8fff]" />}
           label="Total Projects"
           value={fmt(stats.totalProjects)}
           sub={`${stats.activeProjects} active`}
@@ -93,13 +92,7 @@ export function DashboardPage() {
           sub={`${fmt(stats.billableWords)} billable`}
           accent="yellow"
         />
-        <StatCard
-          icon={<Brain className="w-5 h-5 text-purple-400" />}
-          label="TM Leverage"
-          value={`${stats.tmLeveragePct}%`}
-          sub={`${stats.iceSegments} ICE / ${stats.totalSegments} segs`}
-          accent="purple"
-        />
+        <ArcGauge pct={stats.tmLeveragePct} iceSegments={stats.iceSegments} totalSegments={stats.totalSegments} />
         <StatCard
           icon={<CheckCircle2 className="w-5 h-5 text-green-400" />}
           label="Finished"
@@ -114,7 +107,7 @@ export function DashboardPage() {
         {/* Projects by status */}
         <div className="bg-[#13131f] border border-white/5 rounded-xl p-5">
           <h2 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-indigo-400" />
+            <Activity className="w-4 h-4 text-[#9b8fff]" />
             Projects by Status
           </h2>
           <div className="space-y-3">
@@ -159,7 +152,7 @@ export function DashboardPage() {
         {/* Recent activity */}
         <div className="bg-[#13131f] border border-white/5 rounded-xl p-5">
           <h2 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-indigo-400" />
+            <Clock className="w-4 h-4 text-[#9b8fff]" />
             Recent Callbacks
           </h2>
           <div className="space-y-2.5">
@@ -173,7 +166,7 @@ export function DashboardPage() {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-gray-300 truncate">
-                    <span className="text-indigo-400">{EVENT_LABELS[cb.event] ?? cb.event}</span>
+                    <span className="text-[#9b8fff]">{EVENT_LABELS[cb.event] ?? cb.event}</span>
                     {' · '}
                     <span className="text-gray-500">{cb.projectName}</span>
                   </p>
@@ -197,7 +190,7 @@ export function DashboardPage() {
           </div>
           <Link
             to="/callbacks"
-            className="mt-4 flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+            className="mt-4 flex items-center gap-1 text-xs text-[#9b8fff] hover:text-[#b3a9ff] transition-colors"
           >
             View all callbacks <ArrowRight className="w-3 h-3" />
           </Link>
@@ -208,12 +201,12 @@ export function DashboardPage() {
       <div className="bg-[#13131f] border border-white/5 rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-medium text-gray-300 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-indigo-400" />
+            <FileText className="w-4 h-4 text-[#9b8fff]" />
             Recent Projects
           </h2>
           <Link
             to="/projects"
-            className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+            className="flex items-center gap-1 text-xs text-[#9b8fff] hover:text-[#b3a9ff] transition-colors"
           >
             View all <ArrowRight className="w-3 h-3" />
           </Link>
@@ -275,7 +268,7 @@ function StatCard({
   accent: 'indigo' | 'yellow' | 'purple' | 'green'
 }) {
   const ring: Record<string, string> = {
-    indigo: 'border-indigo-500/20',
+    indigo: 'border-[#7c6cfe]/20',
     yellow: 'border-yellow-500/20',
     purple: 'border-purple-500/20',
     green: 'border-green-500/20',
@@ -285,6 +278,58 @@ function StatCard({
       <div className="flex items-center gap-2 mb-3">{icon}<span className="text-xs text-gray-500">{label}</span></div>
       <p className="text-2xl font-semibold text-gray-100">{value}</p>
       <p className="text-xs text-gray-600 mt-1">{sub}</p>
+    </div>
+  )
+}
+
+function ArcGauge({ pct, iceSegments, totalSegments }: { pct: number; iceSegments: number; totalSegments: number }) {
+  const R = 40
+  const cx = 56
+  const cy = 56
+  const startAngle = Math.PI          // 180° — left
+  const endAngle = 2 * Math.PI        // 360° — right (full arc = 180°)
+  const angle = startAngle + (pct / 100) * Math.PI
+
+  function polar(a: number) {
+    return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) }
+  }
+
+  const start = polar(startAngle)
+  const end = polar(angle)
+  const fullEnd = polar(endAngle)
+  const largeArc = angle - startAngle > Math.PI ? 1 : 0
+
+  // track path (full semi-circle)
+  const trackD = `M ${start.x} ${start.y} A ${R} ${R} 0 1 1 ${fullEnd.x} ${fullEnd.y}`
+  // fill path
+  const fillD = pct > 0
+    ? `M ${start.x} ${start.y} A ${R} ${R} 0 ${largeArc} 1 ${end.x} ${end.y}`
+    : ''
+
+  return (
+    <div className="bg-[#13131f] border border-violet-500/10 rounded-xl p-4 flex flex-col items-center justify-center gap-1">
+      <svg width="112" height="68" viewBox="0 0 112 68" className="overflow-visible">
+        <defs>
+          <linearGradient id="arc-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#7c6cfe" />
+            <stop offset="100%" stopColor="#2dd4bf" />
+          </linearGradient>
+        </defs>
+        {/* Track */}
+        <path d={trackD} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" strokeLinecap="round" />
+        {/* Fill */}
+        {fillD && (
+          <path d={fillD} fill="none" stroke="url(#arc-grad)" strokeWidth="8" strokeLinecap="round" />
+        )}
+        {/* Label */}
+        <text x={cx} y={cy - 4} textAnchor="middle" fill="white" fontSize="18" fontWeight="600" fontFamily="Plus Jakarta Sans, sans-serif">
+          {pct}%
+        </text>
+        <text x={cx} y={cy + 12} textAnchor="middle" fill="#6b7280" fontSize="9" fontFamily="Plus Jakarta Sans, sans-serif">
+          TM LEVERAGE
+        </text>
+      </svg>
+      <p className="text-xs text-gray-600 mt-1">{`${iceSegments} ICE / ${totalSegments} segs`}</p>
     </div>
   )
 }

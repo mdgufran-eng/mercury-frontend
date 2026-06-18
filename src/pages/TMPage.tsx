@@ -35,7 +35,7 @@ export function TMPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-100 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-indigo-400" /> Translation Memory
+            <BookOpen className="w-5 h-5 text-[#9b8fff]" /> Translation Memory
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">Stored segment pairs — reused across projects to avoid re-translation</p>
         </div>
@@ -47,8 +47,8 @@ export function TMPage() {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-[#13131f] border border-white/5 rounded-xl p-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
-            <Hash className="w-4 h-4 text-indigo-400" />
+          <div className="w-9 h-9 rounded-lg bg-[#7c6cfe]/10 flex items-center justify-center shrink-0">
+            <Hash className="w-4 h-4 text-[#9b8fff]" />
           </div>
           <div>
             <p className="text-xl font-semibold text-gray-100">{totalEntries}</p>
@@ -84,14 +84,14 @@ export function TMPage() {
             placeholder="Search source or target text…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-4 py-2 bg-[#13131f] border border-white/10 rounded-lg text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full pl-8 pr-4 py-2 bg-[#13131f] border border-white/10 rounded-lg text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-[#7c6cfe] transition-colors"
           />
         </div>
 
         <select
           value={langFilter}
           onChange={(e) => setLangFilter(e.target.value)}
-          className="px-3 py-2 bg-[#13131f] border border-white/10 rounded-lg text-xs text-gray-400 focus:outline-none focus:border-indigo-500 transition-colors"
+          className="px-3 py-2 bg-[#13131f] border border-white/10 rounded-lg text-xs text-gray-400 focus:outline-none focus:border-[#7c6cfe] transition-colors"
         >
           <option value="ALL">All lang pairs</option>
           {langPairs.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -104,7 +104,7 @@ export function TMPage() {
               onClick={() => setMatchFilter(id)}
               className={cn(
                 'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                matchFilter === id ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5',
+                matchFilter === id ? 'bg-[#7c6cfe] text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5',
               )}
             >
               {label}
@@ -137,7 +137,7 @@ export function TMPage() {
                 <div key={entry.id} className="grid grid-cols-[6rem_1fr_1fr_5rem_7rem] hover:bg-white/2 transition-colors items-start py-3">
                   {/* Lang pair */}
                   <div className="px-4">
-                    <span className="font-mono text-xs font-semibold text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">
+                    <span className="font-mono text-xs font-semibold text-[#b3a9ff] bg-[#7c6cfe]/10 px-2 py-0.5 rounded">
                       {entry.sourceLang}→{entry.targetLang}
                     </span>
                   </div>

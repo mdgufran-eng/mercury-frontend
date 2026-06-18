@@ -36,7 +36,7 @@ export function ProjectsPage() {
           <h1 className="text-xl font-semibold text-gray-100">Projects</h1>
           <p className="text-sm text-gray-500 mt-0.5">All translation projects across customers</p>
         </div>
-        <button className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors">
+        <button className="flex items-center gap-2 px-3 py-2 bg-[#7c6cfe] hover:bg-[#6355e0] text-white text-sm rounded-lg transition-colors">
           <Plus className="w-4 h-4" />
           New Project
         </button>
@@ -50,7 +50,7 @@ export function ProjectsPage() {
           placeholder="Search by name or customer…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 bg-[#13131f] border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+          className="w-full pl-9 pr-4 py-2 bg-[#13131f] border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#7c6cfe] transition-colors"
         />
       </div>
 
@@ -83,7 +83,7 @@ export function ProjectsPage() {
                   <td className="px-4 py-3">
                     <Link
                       to={`/projects/${project.id}`}
-                      className="font-medium text-gray-200 hover:text-indigo-400 transition-colors"
+                      className="font-medium text-gray-200 hover:text-[#9b8fff] transition-colors"
                     >
                       {project.name}
                     </Link>

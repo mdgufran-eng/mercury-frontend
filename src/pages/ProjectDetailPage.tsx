@@ -97,7 +97,7 @@ export function ProjectDetailPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Link to="/projects" className="flex items-center gap-1.5 hover:text-indigo-400 transition-colors">
+        <Link to="/projects" className="flex items-center gap-1.5 hover:text-[#9b8fff] transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" />
           Projects
         </Link>
@@ -140,7 +140,7 @@ export function ProjectDetailPage() {
             <div>
               <dt className="text-xs text-gray-600">Language Pair</dt>
               <dd className="mt-0.5">
-                <span className="font-mono text-sm font-semibold text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">
+                <span className="font-mono text-sm font-semibold text-[#b3a9ff] bg-[#7c6cfe]/10 px-2 py-0.5 rounded">
                   {project.sourceLang} → {project.targetLang}
                 </span>
               </dd>
@@ -184,7 +184,7 @@ export function ProjectDetailPage() {
             </div>
             <div className="h-2 bg-white/5 rounded-full overflow-hidden">
               <div
-                className="h-full bg-indigo-500 rounded-full transition-all"
+                className="h-full bg-[#7c6cfe] rounded-full transition-all"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -207,7 +207,7 @@ export function ProjectDetailPage() {
       {/* Files / Jobs */}
       <div className="bg-[#13131f] border border-white/5 rounded-xl overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-4 border-b border-white/5">
-          <FileText className="w-4 h-4 text-indigo-400" />
+          <FileText className="w-4 h-4 text-[#9b8fff]" />
           <h2 className="text-sm font-medium text-gray-300">Files / Jobs</h2>
           <span className="ml-auto text-xs text-gray-600">{totalJobs} files</span>
         </div>
@@ -253,7 +253,7 @@ export function ProjectDetailPage() {
                     <td className="px-4 py-3 text-right">
                       <Link
                         to={`/projects/${project.id}/jobs/${job.id}/segments`}
-                        className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                        className="inline-flex items-center gap-1 text-xs text-[#9b8fff] hover:text-[#b3a9ff] transition-colors"
                       >
                         Segments <ArrowRight className="w-3 h-3" />
                       </Link>
@@ -270,7 +270,7 @@ export function ProjectDetailPage() {
       {projectCallbacks.length > 0 && (
         <div className="bg-[#13131f] border border-white/5 rounded-xl p-5">
           <h2 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-indigo-400" />
+            <Clock className="w-4 h-4 text-[#9b8fff]" />
             Callback History
             <span className="ml-auto text-xs text-gray-600">{projectCallbacks.length} events</span>
           </h2>
@@ -278,7 +278,7 @@ export function ProjectDetailPage() {
             {projectCallbacks.map((cb) => (
               <div key={cb.id} className="flex items-center gap-3">
                 <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', cb.success ? 'bg-green-500' : 'bg-red-500')} />
-                <span className="text-xs text-indigo-400 w-36 shrink-0">
+                <span className="text-xs text-[#9b8fff] w-36 shrink-0">
                   {EVENT_LABELS[cb.event] ?? cb.event}
                 </span>
                 {cb.jobFileName && (
@@ -293,7 +293,7 @@ export function ProjectDetailPage() {
           </div>
           <Link
             to="/callbacks"
-            className="mt-4 flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+            className="mt-4 flex items-center gap-1 text-xs text-[#9b8fff] hover:text-[#b3a9ff] transition-colors"
           >
             View all callbacks <ArrowRight className="w-3 h-3" />
           </Link>

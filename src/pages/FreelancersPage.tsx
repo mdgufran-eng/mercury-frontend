@@ -41,7 +41,7 @@ export function FreelancersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-100 flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-indigo-400" /> Freelancers
+            <UserCheck className="w-5 h-5 text-[#9b8fff]" /> Freelancers
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">Human translators for HUMAN-method projects</p>
         </div>
@@ -50,7 +50,7 @@ export function FreelancersPage() {
             <span className="text-green-400">{availableCount} available</span>
             <span className="text-yellow-400">{busyCount} busy</span>
           </div>
-          <button className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors">
+          <button className="flex items-center gap-2 px-3 py-2 bg-[#7c6cfe] hover:bg-[#6355e0] text-white text-sm rounded-lg transition-colors">
             <Plus className="w-4 h-4" /> Add Freelancer
           </button>
         </div>
@@ -64,7 +64,7 @@ export function FreelancersPage() {
             placeholder="Search by name, email or language…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-4 py-2 bg-[#13131f] border border-white/10 rounded-lg text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full pl-8 pr-4 py-2 bg-[#13131f] border border-white/10 rounded-lg text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-[#7c6cfe] transition-colors"
           />
         </div>
         <div className="flex gap-1 bg-[#13131f] border border-white/5 rounded-lg p-1">
@@ -74,7 +74,7 @@ export function FreelancersPage() {
               onClick={() => setStatusFilter(s)}
               className={cn(
                 'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                statusFilter === s ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5',
+                statusFilter === s ? 'bg-[#7c6cfe] text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5',
               )}
             >
               {s}
@@ -133,7 +133,7 @@ export function FreelancersPage() {
                       <span className="font-semibold text-gray-300">{fl.completedJobs}</span>
                     </div>
                     <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${barPct}%` }} />
+                      <div className="h-full bg-[#7c6cfe] rounded-full" style={{ width: `${barPct}%` }} />
                     </div>
                   </div>
                 </div>

@@ -22,11 +22,11 @@ export function TemplatesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-100 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-indigo-400" /> Templates
+            <FileText className="w-5 h-5 text-[#9b8fff]" /> Templates
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">Project configuration templates (templateId encodes lang + workflow)</p>
         </div>
-        <button className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors">
+        <button className="flex items-center gap-2 px-3 py-2 bg-[#7c6cfe] hover:bg-[#6355e0] text-white text-sm rounded-lg transition-colors">
           <Plus className="w-4 h-4" /> New Template
         </button>
       </div>
@@ -39,7 +39,7 @@ export function TemplatesPage() {
             placeholder="Search templates…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-4 py-2 bg-[#13131f] border border-white/10 rounded-lg text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full pl-8 pr-4 py-2 bg-[#13131f] border border-white/10 rounded-lg text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-[#7c6cfe] transition-colors"
           />
         </div>
         <div className="flex gap-1 bg-[#13131f] border border-white/5 rounded-lg p-1">
@@ -49,7 +49,7 @@ export function TemplatesPage() {
               onClick={() => setMethodFilter(m)}
               className={cn(
                 'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                methodFilter === m ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5',
+                methodFilter === m ? 'bg-[#7c6cfe] text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5',
               )}
             >
               {m}
@@ -83,7 +83,7 @@ export function TemplatesPage() {
                     <p className="text-xs text-gray-600 font-mono mt-0.5">{t.id}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="font-mono text-xs font-semibold text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">
+                    <span className="font-mono text-xs font-semibold text-[#b3a9ff] bg-[#7c6cfe]/10 px-2 py-0.5 rounded">
                       {t.sourceLang} → {t.targetLang}
                     </span>
                   </td>

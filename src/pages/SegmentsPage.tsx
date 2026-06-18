@@ -128,9 +128,9 @@ export function SegmentsPage() {
     <div className="p-6 max-w-6xl mx-auto space-y-5">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Link to="/projects" className="hover:text-indigo-400 transition-colors">Projects</Link>
+        <Link to="/projects" className="hover:text-[#9b8fff] transition-colors">Projects</Link>
         <span>/</span>
-        <Link to={`/projects/${projectId}`} className="hover:text-indigo-400 transition-colors flex items-center gap-1">
+        <Link to={`/projects/${projectId}`} className="hover:text-[#9b8fff] transition-colors flex items-center gap-1">
           <ArrowLeft className="w-3.5 h-3.5" />
           {project?.name ?? 'Project'}
         </Link>
@@ -143,7 +143,7 @@ export function SegmentsPage() {
         <h1 className="text-xl font-semibold text-gray-100">{job?.fileName ?? 'Segment Viewer'}</h1>
         <p className="text-xs text-gray-500 mt-0.5">
           {project?.name} ·{' '}
-          <span className="font-mono text-indigo-400">
+          <span className="font-mono text-[#9b8fff]">
             {job?.sourceLang} → {job?.targetLang}
           </span>{' '}
           · {job?.wordCount?.toLocaleString()} words
@@ -191,7 +191,7 @@ export function SegmentsPage() {
             className={cn(
               'px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5',
               filter === tab.id
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-[#7c6cfe] text-white'
                 : 'text-gray-500 hover:text-gray-300 hover:bg-white/5',
             )}
           >
@@ -234,9 +234,14 @@ export function SegmentsPage() {
                 <div
                   key={seg.id}
                   className={cn(
-                    'grid grid-cols-[3rem_1fr_1fr_7rem] group transition-colors',
-                    isApproved ? 'bg-green-500/3' : 'hover:bg-white/2',
-                    isReview && !isApproved ? 'border-l-2 border-yellow-500/50' : '',
+                    'grid grid-cols-[3rem_1fr_1fr_7rem] group transition-colors border-l-2',
+                    isApproved
+                      ? 'bg-green-500/3 border-green-500/40'
+                      : isICE
+                      ? 'border-[#7c6cfe]/40 hover:bg-white/2'
+                      : isReview
+                      ? 'border-yellow-500/50 hover:bg-white/2'
+                      : 'border-[#f59e0b]/30 hover:bg-white/2',
                   )}
                 >
                   {/* No. */}
@@ -263,12 +268,12 @@ export function SegmentsPage() {
                             }))
                           }
                           rows={3}
-                          className="w-full bg-[#0a0a14] border border-indigo-500/50 rounded-md px-3 py-2 text-sm text-gray-200 leading-relaxed resize-none focus:outline-none focus:border-indigo-400 transition-colors"
+                          className="w-full bg-[#0a0a14] border border-[#7c6cfe]/50 rounded-md px-3 py-2 text-sm text-gray-200 leading-relaxed resize-none focus:outline-none focus:border-[#9b8fff] transition-colors"
                         />
                         <div className="flex gap-2">
                           <button
                             onClick={() => saveEdit(seg.id)}
-                            className="flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-md transition-colors"
+                            className="flex items-center gap-1 px-2.5 py-1 bg-[#7c6cfe] hover:bg-[#6355e0] text-white text-xs rounded-md transition-colors"
                           >
                             <Check className="w-3 h-3" /> Save
                           </button>
@@ -310,8 +315,8 @@ export function SegmentsPage() {
                       className={cn(
                         'inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full',
                         isICE
-                          ? 'bg-purple-500/15 text-purple-300 border border-purple-500/20'
-                          : 'bg-orange-500/15 text-orange-300 border border-orange-500/20',
+                          ? 'bg-[#7c6cfe]/15 text-[#9b8fff] border border-[#7c6cfe]/20'
+                          : 'bg-amber-500/15 text-amber-300 border border-amber-500/20',
                       )}
                     >
                       {isICE ? <Brain className="w-2.5 h-2.5" /> : <Cpu className="w-2.5 h-2.5" />}
@@ -339,7 +344,7 @@ export function SegmentsPage() {
                           'flex items-center gap-1 text-xs px-2 py-0.5 rounded-md border transition-colors',
                           isApproved
                             ? 'border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20'
-                            : 'border-white/10 bg-white/3 text-gray-600 hover:border-indigo-500/40 hover:text-indigo-400',
+                            : 'border-white/10 bg-white/3 text-gray-600 hover:border-[#7c6cfe]/40 hover:text-[#9b8fff]',
                         )}
                         title={isApproved ? 'Approved — click to unlock' : 'Approve segment'}
                       >
