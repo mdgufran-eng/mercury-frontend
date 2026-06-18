@@ -4,7 +4,6 @@ import {
   FolderKanban,
   Bell,
   Users,
-  FileText,
   UserCheck,
   BookOpen,
   Languages,
@@ -20,7 +19,6 @@ const CONFIG_NAV = [
   { to: '/tm',          label: 'Trans. Memory', icon: BookOpen },
   { to: '/callbacks',   label: 'Callbacks',     icon: Bell },
   { to: '/customers',   label: 'Customers',     icon: Users },
-  { to: '/templates',   label: 'Templates',     icon: FileText },
   { to: '/freelancers', label: 'Freelancers',   icon: UserCheck },
 ]
 

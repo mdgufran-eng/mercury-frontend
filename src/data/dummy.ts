@@ -1,4 +1,4 @@
-import type { Project, Job, Segment, Callback, Customer, Template, Freelancer, TMEntry } from '@/types'
+import type { Project, Job, Segment, Callback, Customer, Freelancer, TMEntry } from '@/types'
 
 export const dummyCustomers: Customer[] = [
   {
@@ -21,45 +21,6 @@ export const dummyCustomers: Customer[] = [
     email: 'markus.brandt@eurocorp.de',
     company: 'EuroCorp GmbH',
     createdAt: '2024-03-05T14:15:00Z',
-  },
-]
-
-export const dummyTemplates: Template[] = [
-  {
-    id: 'tmpl-001',
-    name: 'EN → ES (Machine)',
-    sourceLang: 'EN',
-    targetLang: 'ES',
-    method: 'MACHINE',
-    description: 'Standard English to Spanish machine translation template',
-    createdAt: '2024-01-10T08:00:00Z',
-  },
-  {
-    id: 'tmpl-002',
-    name: 'EN → FR (Machine)',
-    sourceLang: 'EN',
-    targetLang: 'FR',
-    method: 'MACHINE',
-    description: 'Standard English to French machine translation template',
-    createdAt: '2024-01-10T08:00:00Z',
-  },
-  {
-    id: 'tmpl-003',
-    name: 'EN → DE (Human)',
-    sourceLang: 'EN',
-    targetLang: 'DE',
-    method: 'HUMAN',
-    description: 'Premium English to German human translation with review',
-    createdAt: '2024-01-12T10:00:00Z',
-  },
-  {
-    id: 'tmpl-004',
-    name: 'EN → PT (Machine)',
-    sourceLang: 'EN',
-    targetLang: 'PT',
-    method: 'MACHINE',
-    description: 'Standard English to Portuguese machine translation template',
-    createdAt: '2024-01-15T09:00:00Z',
   },
 ]
 
@@ -100,8 +61,7 @@ export const dummyProjects: Project[] = [
     targetLang: 'ES',
     status: 'ACTIVE',
     method: 'MACHINE',
-    templateId: 'tmpl-001',
-    templateName: 'EN → ES (Machine)',
+    poNumber: 'PO-2024-0101',
     createdAt: '2024-06-01T09:00:00Z',
     updatedAt: '2024-06-10T14:30:00Z',
     jobCount: 3,
@@ -115,8 +75,7 @@ export const dummyProjects: Project[] = [
     targetLang: 'FR',
     status: 'FINISHED',
     method: 'MACHINE',
-    templateId: 'tmpl-002',
-    templateName: 'EN → FR (Machine)',
+    poNumber: 'PO-2024-0087',
     createdAt: '2024-05-15T11:00:00Z',
     updatedAt: '2024-05-28T16:00:00Z',
     jobCount: 2,
@@ -130,8 +89,7 @@ export const dummyProjects: Project[] = [
     targetLang: 'DE',
     status: 'IN_PROGRESS',
     method: 'HUMAN',
-    templateId: 'tmpl-003',
-    templateName: 'EN → DE (Human)',
+    poNumber: 'PO-2024-0115',
     createdAt: '2024-06-08T08:00:00Z',
     updatedAt: '2024-06-12T09:15:00Z',
     jobCount: 2,
@@ -145,8 +103,7 @@ export const dummyProjects: Project[] = [
     targetLang: 'PT',
     status: 'CREATED',
     method: 'MACHINE',
-    templateId: 'tmpl-004',
-    templateName: 'EN → PT (Machine)',
+    poNumber: 'PO-2024-0122',
     createdAt: '2024-06-14T10:00:00Z',
     updatedAt: '2024-06-14T10:00:00Z',
     jobCount: 3,
@@ -160,8 +117,7 @@ export const dummyProjects: Project[] = [
     targetLang: 'ES',
     status: 'FAILED',
     method: 'MACHINE',
-    templateId: 'tmpl-001',
-    templateName: 'EN → ES (Machine)',
+    poNumber: 'PO-2024-0098',
     createdAt: '2024-06-02T13:00:00Z',
     updatedAt: '2024-06-03T08:45:00Z',
     jobCount: 2,
@@ -329,7 +285,7 @@ export const dummySegments: Segment[] = [
   { id: 'seg-002', jobId: 'job-001', no: 2, source: 'We deliver quality products to over 80 countries worldwide.', target: 'Entregamos productos de calidad en más de 80 países en todo el mundo.', matchType: 'MT', status: 'TRANSLATED' },
   { id: 'seg-003', jobId: 'job-001', no: 3, source: 'Our team of experts is available 24/7 to support your needs.', target: 'Nuestro equipo de expertos está disponible las 24 horas para apoyar sus necesidades.', matchType: 'MT', status: 'TRANSLATED' },
   { id: 'seg-004', jobId: 'job-001', no: 4, source: 'Start your journey with us today.', target: 'Comience su camino con nosotros hoy.', matchType: 'ICE', status: 'CONFIRMED' },
-  { id: 'seg-005', jobId: 'job-001', no: 5, source: 'Trusted by Fortune 500 companies for over two decades.', target: 'La confianza de las empresas Fortune 500 durante más de dos décadas.', matchType: 'MT', status: 'REVIEW' },
+  { id: 'seg-005', jobId: 'job-001', no: 5, source: 'Trusted by Fortune 500 companies for over two decades.', target: 'La confianza de las empresas Fortune 500 durante más de dos décadas.', matchType: 'MT', status: 'TRANSLATED' },
   { id: 'seg-006', jobId: 'job-001', no: 6, source: 'Contact us for a free consultation.', target: 'Contáctenos para una consulta gratuita.', matchType: 'ICE', status: 'CONFIRMED' },
   // job-002 (7 segments)
   { id: 'seg-007', jobId: 'job-002', no: 1, source: 'Our premium coffee blend is sourced from the highlands of Colombia.', target: 'Nuestra mezcla de café premium proviene de las tierras altas de Colombia.', matchType: 'MT', status: 'TRANSLATED' },
@@ -337,7 +293,7 @@ export const dummySegments: Segment[] = [
   { id: 'seg-009', jobId: 'job-002', no: 3, source: 'Rich, full-bodied flavour with hints of chocolate and caramel.', target: 'Sabor rico y completo con toques de chocolate y caramelo.', matchType: 'ICE', status: 'CONFIRMED' },
   { id: 'seg-010', jobId: 'job-002', no: 4, source: 'Available in 250g, 500g and 1kg bags.', target: 'Disponible en bolsas de 250g, 500g y 1kg.', matchType: 'ICE', status: 'CONFIRMED' },
   { id: 'seg-011', jobId: 'job-002', no: 5, source: 'Free shipping on orders over $50.', target: 'Envío gratuito en pedidos superiores a $50.', matchType: 'MT', status: 'TRANSLATED' },
-  { id: 'seg-012', jobId: 'job-002', no: 6, source: 'Subscribe and save 15% on every order.', target: 'Suscríbase y ahorre un 15% en cada pedido.', matchType: 'MT', status: 'REVIEW' },
+  { id: 'seg-012', jobId: 'job-002', no: 6, source: 'Subscribe and save 15% on every order.', target: 'Suscríbase y ahorre un 15% en cada pedido.', matchType: 'MT', status: 'TRANSLATED' },
   { id: 'seg-013', jobId: 'job-002', no: 7, source: 'Satisfaction guaranteed or your money back.', target: 'Satisfacción garantizada o le devolvemos el dinero.', matchType: 'ICE', status: 'CONFIRMED' },
   // job-004 (8 segments)
   { id: 'seg-014', jobId: 'job-004', no: 1, source: 'Authentication is handled via Bearer tokens in the Authorization header.', target: "L'authentification est gérée via des jetons Bearer dans l'en-tête Authorization.", matchType: 'MT', status: 'TRANSLATED' },
@@ -345,7 +301,7 @@ export const dummySegments: Segment[] = [
   { id: 'seg-016', jobId: 'job-004', no: 3, source: 'Rate limiting is applied at 1000 requests per minute per API key.', target: 'La limitation de débit est appliquée à 1000 requêtes par minute par clé API.', matchType: 'MT', status: 'TRANSLATED' },
   { id: 'seg-017', jobId: 'job-004', no: 4, source: 'Errors are returned with a standard error object containing a code and message.', target: 'Les erreurs sont retournées avec un objet d\'erreur standard contenant un code et un message.', matchType: 'MT', status: 'TRANSLATED' },
   { id: 'seg-018', jobId: 'job-004', no: 5, source: 'Pagination is cursor-based for all list endpoints.', target: 'La pagination est basée sur un curseur pour tous les points de terminaison de liste.', matchType: 'ICE', status: 'CONFIRMED' },
-  { id: 'seg-019', jobId: 'job-004', no: 6, source: 'Webhooks support retry logic with exponential backoff.', target: 'Les webhooks prennent en charge la logique de nouvelle tentative avec un backoff exponentiel.', matchType: 'MT', status: 'REVIEW' },
+  { id: 'seg-019', jobId: 'job-004', no: 6, source: 'Webhooks support retry logic with exponential backoff.', target: 'Les webhooks prennent en charge la logique de nouvelle tentative avec un backoff exponentiel.', matchType: 'MT', status: 'TRANSLATED' },
   { id: 'seg-020', jobId: 'job-004', no: 7, source: 'SDKs are available for Python, Node.js, Ruby and Go.', target: 'Des SDK sont disponibles pour Python, Node.js, Ruby et Go.', matchType: 'ICE', status: 'CONFIRMED' },
   { id: 'seg-021', jobId: 'job-004', no: 8, source: 'Refer to the changelog for breaking changes in each release.', target: 'Référez-vous au changelog pour les changements incompatibles dans chaque version.', matchType: 'MT', status: 'TRANSLATED' },
 ]

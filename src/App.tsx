@@ -6,7 +6,6 @@ import { ProjectDetailPage } from '@/pages/ProjectDetailPage'
 import { SegmentsPage } from '@/pages/SegmentsPage'
 import { CallbacksPage } from '@/pages/CallbacksPage'
 import { CustomersPage } from '@/pages/CustomersPage'
-import { TemplatesPage } from '@/pages/TemplatesPage'
 import { FreelancersPage } from '@/pages/FreelancersPage'
 import { TMPage } from '@/pages/TMPage'
 import { DashboardPage } from '@/pages/DashboardPage'
@@ -33,7 +32,6 @@ export default function App() {
             <Route path="projects/:projectId/jobs/:jobId/segments" element={<SegmentsPage />} />
             <Route path="callbacks" element={<CallbacksPage />} />
             <Route path="customers" element={<CustomersPage />} />
-            <Route path="templates" element={<TemplatesPage />} />
             <Route path="freelancers" element={<FreelancersPage />} />
             <Route path="tm" element={<TMPage />} />
           </Route>

@@ -10,14 +10,13 @@ import {
   Check,
   Brain,
   Cpu,
-  AlertCircle,
   Filter,
 } from 'lucide-react'
 import { getSegments, getJob, getProject } from '@/api/client'
 import { cn } from '@/lib/utils'
 import type { Segment } from '@/types'
 
-type FilterTab = 'ALL' | 'ICE' | 'MT' | 'REVIEW'
+type FilterTab = 'ALL' | 'ICE' | 'MT'
 
 interface SegmentState {
   target: string
@@ -107,13 +106,11 @@ export function SegmentsPage() {
 
   const iceCount = segments?.filter((s) => s.matchType === 'ICE').length ?? 0
   const mtCount = segments?.filter((s) => s.matchType === 'MT').length ?? 0
-  const reviewCount = segments?.filter((s) => s.status === 'REVIEW').length ?? 0
   const approvedCount = Object.values(segState).filter((s) => s.approved).length
 
   const filtered = segments?.filter((s) => {
     if (filter === 'ICE') return s.matchType === 'ICE'
     if (filter === 'MT') return s.matchType === 'MT'
-    if (filter === 'REVIEW') return s.status === 'REVIEW'
     return true
   })
 
@@ -121,7 +118,6 @@ export function SegmentsPage() {
     { id: 'ALL', label: 'All', count: segments?.length ?? 0 },
     { id: 'ICE', label: 'ICE', count: iceCount },
     { id: 'MT', label: 'MT', count: mtCount },
-    { id: 'REVIEW', label: 'Review', count: reviewCount },
   ]
 
   return (
@@ -163,12 +159,6 @@ export function SegmentsPage() {
           label="MT"
           count={mtCount}
           colorClass="bg-orange-500/10 text-orange-400 border-orange-500/20"
-        />
-        <StatPill
-          icon={<AlertCircle className="w-3.5 h-3.5" />}
-          label="Review"
-          count={reviewCount}
-          colorClass="bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
         />
         <StatPill
           icon={<CheckCircle2 className="w-3.5 h-3.5" />}
@@ -228,7 +218,6 @@ export function SegmentsPage() {
               const isApproved = ss?.approved ?? false
               const isLocked = ss?.locked ?? false
               const isEditing = ss?.editing ?? false
-              const isReview = seg.status === 'REVIEW'
 
               return (
                 <div
@@ -239,8 +228,6 @@ export function SegmentsPage() {
                       ? 'bg-green-500/3 border-green-500/40'
                       : isICE
                       ? 'border-[#7c6cfe]/40 hover:bg-white/2'
-                      : isReview
-                      ? 'border-yellow-500/50 hover:bg-white/2'
                       : 'border-[#f59e0b]/30 hover:bg-white/2',
                   )}
                 >
@@ -322,11 +309,6 @@ export function SegmentsPage() {
                       {isICE ? <Brain className="w-2.5 h-2.5" /> : <Cpu className="w-2.5 h-2.5" />}
                       {seg.matchType}
                     </span>
-
-                    {/* Review flag */}
-                    {isReview && !isApproved && (
-                      <span className="text-xs text-yellow-500 font-medium">Review</span>
-                    )}
 
                     {/* Approve / lock button */}
                     {isLocked ? (

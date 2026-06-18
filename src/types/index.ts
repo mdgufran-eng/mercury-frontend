@@ -12,16 +12,6 @@ export interface Customer {
   createdAt: string
 }
 
-export interface Template {
-  id: string
-  name: string
-  sourceLang: string
-  targetLang: string
-  method: TranslationMethod
-  description: string
-  createdAt: string
-}
-
 export interface Freelancer {
   id: string
   name: string
@@ -40,8 +30,7 @@ export interface Project {
   targetLang: string
   status: ProjectStatus
   method: TranslationMethod
-  templateId: string
-  templateName: string
+  poNumber: string
   createdAt: string
   updatedAt: string
   jobCount: number
@@ -68,7 +57,7 @@ export interface Segment {
   source: string
   target: string
   matchType: MatchType
-  status: 'TRANSLATED' | 'CONFIRMED' | 'REVIEW'
+  status: 'TRANSLATED' | 'CONFIRMED'
 }
 
 export interface Callback {

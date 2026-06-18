@@ -221,7 +221,7 @@ export function DashboardPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-gray-200 truncate">{p.name}</p>
                 <p className="text-xs text-gray-500">
-                  {p.sourceLang} → {p.targetLang} · {p.customerName}
+                  {p.targetLang} · {p.poNumber}
                 </p>
               </div>
               <div className="flex items-center gap-3 shrink-0">

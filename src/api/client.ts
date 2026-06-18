@@ -5,11 +5,10 @@ import {
   dummySegments,
   dummyCallbacks,
   dummyCustomers,
-  dummyTemplates,
   dummyFreelancers,
   dummyTMEntries,
 } from '@/data/dummy'
-import type { Project, Job, Segment, Callback, Customer, Template, Freelancer, TMEntry } from '@/types'
+import type { Project, Job, Segment, Callback, Customer, Freelancer, TMEntry } from '@/types'
 
 // Real axios instance (for future use when backend is ready)
 export const httpClient = axios.create({
@@ -43,9 +42,6 @@ export const getCallbacks = (): Promise<Callback[]> => delay(dummyCallbacks)
 
 // --- Customers ---
 export const getCustomers = (): Promise<Customer[]> => delay(dummyCustomers)
-
-// --- Templates ---
-export const getTemplates = (): Promise<Template[]> => delay(dummyTemplates)
 
 // --- Freelancers ---
 export const getFreelancers = (): Promise<Freelancer[]> => delay(dummyFreelancers)
