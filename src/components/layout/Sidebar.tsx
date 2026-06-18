@@ -58,7 +58,7 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-white/5">
-        <p className="text-xs text-gray-600">Babel TMS · Phase F3</p>
+        <p className="text-xs text-gray-600">Babel TMS · Phase F4</p>
       </div>
     </aside>
   )
