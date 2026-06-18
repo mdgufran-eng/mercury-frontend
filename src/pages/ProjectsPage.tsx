@@ -1,86 +1,132 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { Plus, Search } from 'lucide-react'
+import { useState } from 'react'
 import { getProjects } from '@/api/client'
-import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 import type { ProjectStatus } from '@/types'
 
-function statusBadgeVariant(status: ProjectStatus) {
-  switch (status) {
-    case 'ACTIVE': return 'blue'
-    case 'FINISHED': return 'green'
-    case 'FAILED': return 'red'
-    case 'IN_PROGRESS': return 'yellow'
-    case 'CREATED': return 'gray'
-  }
+const STATUS_STYLES: Record<ProjectStatus, { dot: string; text: string; bg: string }> = {
+  ACTIVE:      { dot: 'bg-blue-500',   text: 'text-blue-400',   bg: 'bg-blue-500/10' },
+  IN_PROGRESS: { dot: 'bg-yellow-500', text: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+  FINISHED:    { dot: 'bg-green-500',  text: 'text-green-400',  bg: 'bg-green-500/10' },
+  CREATED:     { dot: 'bg-gray-500',   text: 'text-gray-400',   bg: 'bg-gray-500/10' },
+  FAILED:      { dot: 'bg-red-500',    text: 'text-red-400',    bg: 'bg-red-500/10' },
 }
 
 export function ProjectsPage() {
+  const [search, setSearch] = useState('')
+
   const { data: projects, isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: getProjects,
   })
 
+  const filtered = projects?.filter(
+    (p) =>
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.customerName.toLowerCase().includes(search.toLowerCase()),
+  )
+
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
-        <p className="text-sm text-gray-500 mt-1">All translation projects across customers</p>
+    <div className="p-6 max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-100">Projects</h1>
+          <p className="text-sm text-gray-500 mt-0.5">All translation projects across customers</p>
+        </div>
+        <button className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors">
+          <Plus className="w-4 h-4" />
+          New Project
+        </button>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        {isLoading ? (
-          <div className="p-8 text-center text-gray-400 text-sm">Loading projects…</div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-600">ID</TableHead>
-                <TableHead className="font-semibold text-gray-600">Name</TableHead>
-                <TableHead className="font-semibold text-gray-600">Customer</TableHead>
-                <TableHead className="font-semibold text-gray-600">Lang Pair</TableHead>
-                <TableHead className="font-semibold text-gray-600">Status</TableHead>
-                <TableHead className="font-semibold text-gray-600">Method</TableHead>
-                <TableHead className="font-semibold text-gray-600">Jobs</TableHead>
-                <TableHead className="font-semibold text-gray-600">Created</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {projects?.map((project) => (
-                <TableRow key={project.id} className="cursor-pointer">
-                  <TableCell className="font-mono text-xs text-gray-400">{project.id}</TableCell>
-                  <TableCell>
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+        <input
+          type="text"
+          placeholder="Search by name or customer…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 bg-[#13131f] border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+        />
+      </div>
+
+      {/* Table */}
+      <div className="bg-[#13131f] border border-white/5 rounded-xl overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-white/5">
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Pair</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Jobs</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {isLoading && (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-600 text-sm">
+                  Loading…
+                </td>
+              </tr>
+            )}
+            {filtered?.map((project) => {
+              const s = STATUS_STYLES[project.status]
+              return (
+                <tr key={project.id} className="hover:bg-white/3 transition-colors">
+                  <td className="px-4 py-3">
                     <Link
                       to={`/projects/${project.id}`}
-                      className="font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
+                      className="font-medium text-gray-200 hover:text-indigo-400 transition-colors"
                     >
                       {project.name}
                     </Link>
-                  </TableCell>
-                  <TableCell className="text-gray-600">{project.customerName}</TableCell>
-                  <TableCell>
-                    <span className="text-sm font-medium text-gray-700">
-                      {project.sourceLang} → {project.targetLang}
+                    <p className="text-xs text-gray-600 font-mono mt-0.5">{project.id}</p>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400">{project.customerName}</td>
+                  <td className="px-4 py-3">
+                    <span className="font-mono text-xs text-gray-300 bg-white/5 px-2 py-0.5 rounded">
+                      {project.sourceLang}→{project.targetLang}
                     </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={statusBadgeVariant(project.status)}>{project.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={project.method === 'MACHINE' ? 'secondary' : 'outline'}>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={cn(
+                        'text-xs font-medium px-2 py-0.5 rounded-full',
+                        project.method === 'MACHINE'
+                          ? 'bg-blue-500/10 text-blue-400'
+                          : 'bg-amber-500/10 text-amber-400',
+                      )}
+                    >
                       {project.method}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-gray-600">{project.jobCount}</TableCell>
-                  <TableCell className="text-gray-500 text-xs">
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn('inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full', s.bg, s.text)}>
+                      <span className={cn('w-1.5 h-1.5 rounded-full', s.dot)} />
+                      {project.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400">{project.jobCount}</td>
+                  <td className="px-4 py-3 text-gray-600 text-xs">
                     {new Date(project.createdAt).toLocaleDateString()}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+        {!isLoading && filtered?.length === 0 && (
+          <p className="px-4 py-8 text-center text-gray-600 text-sm">No projects match your search.</p>
         )}
       </div>
+      <p className="mt-3 text-xs text-gray-600">{filtered?.length ?? 0} projects</p>
     </div>
   )
 }
