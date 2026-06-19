@@ -1,11 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, Search, X, Upload, FolderPlus } from 'lucide-react'
-import { useState, useRef } from 'react'
-import { getProjects, getCustomers } from '@/api/client'
+import { Plus, Search, X, FolderPlus } from 'lucide-react'
+import { useState } from 'react'
+import { getProjects, getCustomers, createProject } from '@/api/client'
 import { cn } from '@/lib/utils'
 import type { ProjectStatus } from '@/types'
-import { dummyProjects } from '@/data/dummy'
 
 const STATUS_STYLES: Record<ProjectStatus, { dot: string; text: string; bg: string }> = {
   ACTIVE:      { dot: 'bg-blue-500',   text: 'text-blue-400',   bg: 'bg-blue-500/10' },
@@ -52,6 +51,10 @@ interface NewProjectForm {
   sourceLang: string
   targetLang: string
   method: 'MACHINE' | 'HUMAN'
+  cbJobFinished: string
+  cbProjectCompletion: string
+  cbProjectCreated: string
+  cbAnalysisFinished: string
 }
 
 function NewProjectModal({ onClose }: { onClose: () => void }) {
@@ -64,34 +67,40 @@ function NewProjectModal({ onClose }: { onClose: () => void }) {
     sourceLang: 'EN',
     targetLang: '',
     method: 'MACHINE',
+    cbProjectCreated:   'http://localhost:9999/project-created',
+    cbAnalysisFinished: 'http://localhost:9999/analysis-finished',
+    cbJobFinished:      'http://localhost:9999/job-finished',
+    cbProjectCompletion:'http://localhost:9999/project-completed',
   })
+  const [showWebhooks, setShowWebhooks] = useState(true)
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   function set(key: keyof NewProjectForm, value: string) {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault()
-    const customer = customers?.find((c) => c.id === form.customerId)
-    const now = new Date().toISOString()
-    const newProject = {
-      id: `proj-${String(Date.now()).slice(-6)}`,
-      name: form.name,
-      customerId: form.customerId,
-      customerName: customer?.name ?? '',
-      sourceLang: form.sourceLang,
-      targetLang: form.targetLang,
-      status: 'CREATED' as ProjectStatus,
-      method: form.method,
-      poNumber: '',
-      createdAt: now,
-      updatedAt: now,
-      jobCount: 0,
+    setLoading(true)
+    try {
+      await createProject({
+        name: form.name,
+        customerId: form.customerId,
+        targetLang: form.targetLang,
+        method: form.method,
+        callbackUrls: {
+          projectCreated:    form.cbProjectCreated    || undefined,
+          analysisFinished:  form.cbAnalysisFinished  || undefined,
+          jobFinished:       form.cbJobFinished       || undefined,
+          projectCompletion: form.cbProjectCompletion || undefined,
+        },
+      })
+      qc.invalidateQueries({ queryKey: ['projects'] })
+      setSubmitted(true)
+    } finally {
+      setLoading(false)
     }
-    dummyProjects.unshift(newProject)
-    qc.invalidateQueries({ queryKey: ['projects'] })
-    setSubmitted(true)
   }
 
   if (submitted) {
@@ -181,16 +190,67 @@ function NewProjectModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
+          {/* Collapsible webhook URLs section */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowWebhooks((v) => !v)}
+              className="text-xs text-[#9b8fff] hover:text-[#c4baff] transition-colors"
+            >
+              {showWebhooks ? '− Hide webhook callbacks' : '＋ Add webhook callbacks'}
+            </button>
+            {showWebhooks && (
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Project Created URL</Label>
+                  <Input
+                    type="url"
+                    placeholder="https://your-server.com/callback"
+                    value={form.cbProjectCreated}
+                    onChange={(e) => set('cbProjectCreated', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Analysis Finished URL</Label>
+                  <Input
+                    type="url"
+                    placeholder="https://your-server.com/callback"
+                    value={form.cbAnalysisFinished}
+                    onChange={(e) => set('cbAnalysisFinished', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Job Finished URL</Label>
+                  <Input
+                    type="url"
+                    placeholder="https://your-server.com/callback"
+                    value={form.cbJobFinished}
+                    onChange={(e) => set('cbJobFinished', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Project Completed URL</Label>
+                  <Input
+                    type="url"
+                    placeholder="https://your-server.com/callback"
+                    value={form.cbProjectCompletion}
+                    onChange={(e) => set('cbProjectCompletion', e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 text-sm rounded-lg transition-colors">
               Cancel
             </button>
             <button
               type="submit"
-              disabled={!form.name || !form.customerId || !form.sourceLang || !form.targetLang}
+              disabled={loading || !form.name || !form.customerId || !form.sourceLang || !form.targetLang}
               className="flex-1 px-4 py-2 bg-[#7c6cfe] hover:bg-[#6355e0] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
             >
-              Create Project
+              {loading ? 'Creating…' : 'Create Project'}
             </button>
           </div>
         </form>

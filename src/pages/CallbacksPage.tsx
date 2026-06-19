@@ -9,7 +9,7 @@ import {
   Search,
   Bell,
 } from 'lucide-react'
-import { getCallbacks } from '@/api/client'
+import { getCallbacks, resendCallback } from '@/api/client'
 import { cn } from '@/lib/utils'
 import type { CallbackEvent } from '@/types'
 
@@ -34,12 +34,17 @@ interface ResendState {
   [id: string]: 'idle' | 'sending' | 'sent' | 'error'
 }
 
-function simulateResend(id: string, setState: React.Dispatch<React.SetStateAction<ResendState>>) {
+async function triggerResend(id: string, setState: React.Dispatch<React.SetStateAction<ResendState>>, qc: ReturnType<typeof useQueryClient>) {
   setState((prev) => ({ ...prev, [id]: 'sending' }))
-  setTimeout(() => {
-    setState((prev) => ({ ...prev, [id]: Math.random() > 0.2 ? 'sent' : 'error' }))
+  try {
+    await resendCallback(id)
+    setState((prev) => ({ ...prev, [id]: 'sent' }))
+    qc.invalidateQueries({ queryKey: ['callbacks'] })
+  } catch {
+    setState((prev) => ({ ...prev, [id]: 'error' }))
+  } finally {
     setTimeout(() => setState((prev) => ({ ...prev, [id]: 'idle' })), 2500)
-  }, 1200)
+  }
 }
 
 export function CallbacksPage() {
@@ -228,7 +233,7 @@ export function CallbacksPage() {
                     {/* Resend */}
                     <div className="px-4 py-4 text-center">
                       <button
-                        onClick={() => simulateResend(cb.id, setResendState)}
+                        onClick={() => triggerResend(cb.id, setResendState, queryClient)}
                         disabled={rs === 'sending'}
                         className={cn(
                           'inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border transition-all',

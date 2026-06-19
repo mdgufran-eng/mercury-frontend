@@ -14,11 +14,11 @@ import {
   Upload,
   X,
   FilePlus,
+  Download,
 } from 'lucide-react'
-import { getProject, getJobs, getCallbacks } from '@/api/client'
+import { getProject, getJobs, getCallbacks, uploadFiles, downloadTranslations } from '@/api/client'
 import { cn } from '@/lib/utils'
 import type { ProjectStatus, JobStatus } from '@/types'
-import { dummyJobs } from '@/data/dummy'
 
 const PROJECT_STATUS: Record<ProjectStatus, { dot: string; text: string; bg: string }> = {
   ACTIVE:      { dot: 'bg-blue-500',   text: 'text-blue-400',   bg: 'bg-blue-500/10' },
@@ -47,36 +47,35 @@ const EVENT_LABELS: Record<string, string> = {
 function UploadFileModal({ projectId, onClose }: { projectId: string; onClose: () => void }) {
   const qc = useQueryClient()
   const fileRef = useRef<HTMLInputElement>(null)
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
 
-  function pickFile(f: File | null) {
-    if (!f) return
-    const ok = /\.(xliff|xlf|docx|txt|html)$/i.test(f.name)
-    if (ok) setFile(f)
+  function pickFiles(fileList: FileList | null) {
+    if (!fileList) return
+    const valid = Array.from(fileList).filter((f) => /\.json$/i.test(f.name))
+    if (valid.length) setFiles((prev) => {
+      const names = new Set(prev.map((f) => f.name))
+      return [...prev, ...valid.filter((f) => !names.has(f.name))]
+    })
   }
 
-  function submit(e: React.FormEvent) {
+  function removeFile(name: string) {
+    setFiles((prev) => prev.filter((f) => f.name !== name))
+  }
+
+  async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!file) return
-    const now = new Date().toISOString()
-    const wordCount = Math.floor(Math.random() * 3000) + 500
-    const segCount = Math.ceil(wordCount / 8)
-    dummyJobs.push({
-      id: `job-${String(Date.now()).slice(-6)}`,
-      projectId,
-      fileName: file.name,
-      status: 'PENDING',
-      sourceLang: 'EN',
-      targetLang: 'ES',
-      wordCount,
-      segmentCount: segCount,
-      createdAt: now,
-      updatedAt: now,
-    })
-    qc.invalidateQueries({ queryKey: ['jobs', projectId] })
-    setSubmitted(true)
+    if (!files.length) return
+    setLoading(true)
+    try {
+      await uploadFiles(projectId, files)
+      qc.invalidateQueries({ queryKey: ['jobs', projectId] })
+      setSubmitted(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (submitted) {
@@ -86,13 +85,9 @@ function UploadFileModal({ projectId, onClose }: { projectId: string; onClose: (
           <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
             <FilePlus className="w-6 h-6 text-green-400" />
           </div>
-          <h3 className="text-base font-semibold text-gray-100 mb-1">File Uploaded</h3>
-          <p className="text-sm text-gray-500 mb-1 font-mono">{file?.name}</p>
+          <h3 className="text-base font-semibold text-gray-100 mb-1">{files.length} file{files.length > 1 ? 's' : ''} uploaded</h3>
           <p className="text-xs text-gray-600 mb-6">Translation queued · status: PENDING</p>
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-2 bg-[#7c6cfe] hover:bg-[#6355e0] text-white text-sm rounded-lg transition-colors"
-          >
+          <button onClick={onClose} className="w-full px-4 py-2 bg-[#7c6cfe] hover:bg-[#6355e0] text-white text-sm rounded-lg transition-colors">
             Done
           </button>
         </div>
@@ -105,7 +100,7 @@ function UploadFileModal({ projectId, onClose }: { projectId: string; onClose: (
       <div className="bg-[#13131f] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-semibold text-gray-100 flex items-center gap-2">
-            <Upload className="w-4 h-4 text-[#9b8fff]" /> Upload File
+            <Upload className="w-4 h-4 text-[#9b8fff]" /> Upload Files
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300 transition-colors">
             <X className="w-4 h-4" />
@@ -118,33 +113,40 @@ function UploadFileModal({ projectId, onClose }: { projectId: string; onClose: (
             onClick={() => fileRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
-            onDrop={(e) => { e.preventDefault(); setDragOver(false); pickFile(e.dataTransfer.files[0]) }}
+            onDrop={(e) => { e.preventDefault(); setDragOver(false); pickFiles(e.dataTransfer.files) }}
             className={cn(
-              'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors',
+              'border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors',
               dragOver ? 'border-[#7c6cfe] bg-[#7c6cfe]/5' : 'border-white/10 hover:border-white/20',
             )}
           >
             <input
               ref={fileRef}
               type="file"
-              accept=".xliff,.xlf,.docx,.txt,.html"
+              accept=".json"
+              multiple
               className="hidden"
-              onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => pickFiles(e.target.files)}
             />
-            {file ? (
-              <div>
-                <FileText className="w-8 h-8 text-[#9b8fff] mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-200">{file.name}</p>
-                <p className="text-xs text-gray-600 mt-0.5">{(file.size / 1024).toFixed(1)} KB</p>
-              </div>
-            ) : (
-              <div>
-                <Upload className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">Drop a file here or click to browse</p>
-                <p className="text-xs text-gray-600 mt-1">.xliff · .xlf · .docx · .txt · .html</p>
-              </div>
-            )}
+            <Upload className="w-7 h-7 text-gray-600 mx-auto mb-2" />
+            <p className="text-sm text-gray-400">Drop JSON files here or click to browse</p>
+            <p className="text-xs text-gray-600 mt-1">Multiple files supported · .json only</p>
           </div>
+
+          {/* File list */}
+          {files.length > 0 && (
+            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              {files.map((f) => (
+                <div key={f.name} className="flex items-center gap-3 px-3 py-2 bg-white/5 rounded-lg">
+                  <FileText className="w-3.5 h-3.5 text-[#9b8fff] shrink-0" />
+                  <span className="text-xs text-gray-300 font-mono flex-1 truncate">{f.name}</span>
+                  <span className="text-xs text-gray-600 shrink-0">{(f.size / 1024).toFixed(1)} KB</span>
+                  <button type="button" onClick={() => removeFile(f.name)} className="p-0.5 text-gray-600 hover:text-gray-400 transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 text-sm rounded-lg transition-colors">
@@ -152,10 +154,10 @@ function UploadFileModal({ projectId, onClose }: { projectId: string; onClose: (
             </button>
             <button
               type="submit"
-              disabled={!file}
+              disabled={loading || !files.length}
               className="flex-1 px-4 py-2 bg-[#7c6cfe] hover:bg-[#6355e0] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
             >
-              <Upload className="w-3.5 h-3.5" /> Upload File
+              <Upload className="w-3.5 h-3.5" /> {loading ? 'Uploading…' : files.length > 0 ? `Upload ${files.length} file${files.length > 1 ? 's' : ''}` : 'Upload Files'}
             </button>
           </div>
         </form>
@@ -352,12 +354,59 @@ export function ProjectDetailPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
+              {/* All files row */}
+              {jobs && jobs.length > 0 && (
+                <tr className="bg-white/[0.02]">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-[#9b8fff] shrink-0" />
+                      <span className="font-semibold text-gray-200">All files</span>
+                      <span className="text-xs text-gray-600 ml-1">{jobs.length} files</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-xs text-gray-600">{completedJobs}/{jobs.length} completed</span>
+                  </td>
+                  <td className="px-4 py-3 text-right text-gray-300 font-mono text-xs font-semibold">
+                    {totalWords.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-right text-gray-400 text-xs">
+                    {jobs.reduce((s, j) => s + j.segmentCount, 0)}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 text-xs" />
+                  <td className="px-4 py-3 text-right">
+                    {completedJobs > 0 && (
+                      <button
+                        onClick={() => downloadTranslations(projectId!)}
+                        className="inline-flex items-center gap-1 text-xs text-[#9b8fff] hover:text-[#b3a9ff] transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" /> Download all
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              )}
+
+              {/* Finished files sub-header */}
+              {jobs && completedJobs > 0 && (
+                <tr className="bg-white/[0.01]">
+                  <td className="px-5 py-2.5" colSpan={6}>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                      <span className="text-xs font-medium text-green-400">Finished files</span>
+                      <span className="text-xs text-gray-600">{completedJobs} files</span>
+                    </div>
+                  </td>
+                </tr>
+              )}
+
+              {/* Individual file rows */}
               {jobs?.map((job) => {
                 const js = JOB_STATUS[job.status]
                 return (
                   <tr key={job.id} className="hover:bg-white/3 transition-colors">
-                    <td className="px-5 py-3">
-                      <p className="font-medium text-gray-200">{job.fileName}</p>
+                    <td className="px-5 py-3 pl-10">
+                      <p className="font-medium text-gray-200 text-sm">{job.fileName}</p>
                       <p className="text-xs text-gray-600 font-mono mt-0.5">{job.id}</p>
                     </td>
                     <td className="px-4 py-3">
@@ -376,12 +425,22 @@ export function ProjectDetailPage() {
                       {new Date(job.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Link
-                        to={`/projects/${project.id}/jobs/${job.id}/segments`}
-                        className="inline-flex items-center gap-1 text-xs text-[#9b8fff] hover:text-[#b3a9ff] transition-colors"
-                      >
-                        Segments <ArrowRight className="w-3 h-3" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        {job.status === 'COMPLETED' && (
+                          <button
+                            onClick={() => downloadTranslations(projectId!, [job.id])}
+                            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                          >
+                            <Download className="w-3 h-3" />
+                          </button>
+                        )}
+                        <Link
+                          to={`/projects/${project.id}/jobs/${job.id}/segments`}
+                          className="inline-flex items-center gap-1 text-xs text-[#9b8fff] hover:text-[#b3a9ff] transition-colors"
+                        >
+                          Segments <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 )
