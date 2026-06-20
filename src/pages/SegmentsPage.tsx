@@ -408,7 +408,7 @@ export function SegmentsPage() {
                             {isHuman ? 'Click edit to add translation…' : '—'}
                           </p>
                         )}
-                        {!isLocked && !isJobComplete && (
+                        {!isLocked && (
                           <button
                             onClick={() => startEdit(seg.id)}
                             className="opacity-0 group-hover/target:opacity-100 p-1 rounded hover:bg-white/10 text-gray-600 hover:text-gray-400 transition-all shrink-0 mt-0.5"
@@ -455,7 +455,7 @@ export function SegmentsPage() {
                       <span className="flex items-center gap-1 text-xs text-green-400">
                         <Lock className="w-3.5 h-3.5" />
                       </span>
-                    ) : !isJobComplete && (
+                    ) : (
                       <button
                         onClick={() => handleApprove(seg.id, seg.id)}
                         disabled={ss?.approving || !hasTarget}
