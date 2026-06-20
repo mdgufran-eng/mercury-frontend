@@ -62,6 +62,22 @@ export const uploadFiles = async (projectId: string, files: File[]): Promise<voi
   })
 }
 
+export const updateFile = async (
+  projectId: string,
+  jobId: string,
+  body: { fileName: string; sourceContent: Record<string, unknown> },
+): Promise<void> => {
+  await httpClient.put(`/admin/api/projects/${projectId}/jobs/${jobId}`, body)
+}
+
+export const deleteFile = async (projectId: string, jobId: string): Promise<void> => {
+  await httpClient.delete(`/admin/api/projects/${projectId}/jobs/${jobId}`)
+}
+
+export const retryFile = async (projectId: string, jobId: string): Promise<void> => {
+  await httpClient.post(`/admin/api/projects/${projectId}/jobs/${jobId}/retry`)
+}
+
 // --- Translation download ---
 export const downloadTranslations = async (projectId: string, jobIds?: string[]): Promise<void> => {
   const params = new URLSearchParams({ fileType: 'TARGET' })
@@ -178,6 +194,8 @@ function mapJob(j: Record<string, unknown>): Job {
     id: String(j['id'] ?? j['jobId']),
     projectId: String(j['projectId'] ?? ''),
     fileName: String(j['fileName'] ?? ''),
+    sourceContent: j['sourceContent'] as Record<string, unknown> | undefined,
+    sourceHash: j['sourceHash'] ? String(j['sourceHash']) : undefined,
     sourceLang: String(j['sourceLang'] ?? 'EN'),
     targetLang: String(j['targetLang'] ?? ''),
     status: status as Job['status'],
@@ -253,5 +271,15 @@ function mapTMEntry(t: Record<string, unknown>): TMEntry {
     matchScore: Number(t['matchScore'] ?? 100),
     usageCount: Number(t['usageCount'] ?? 0),
     createdAt: String(t['createdAt'] ?? ''),
+  }
+}
+
+// --- Templates ---
+export const getTemplates = async () => {
+  try {
+    const { data } = await httpClient.get('/admin/api/templates')
+    return data.data ?? []
+  } catch {
+    return []
   }
 }

@@ -15,10 +15,23 @@ import {
   X,
   FilePlus,
   Download,
+  Pencil,
+  Trash2,
+  RotateCcw,
 } from 'lucide-react'
-import { getProject, getJobs, getCallbacks, uploadFiles, downloadTranslations } from '@/api/client'
+import {
+  getProject,
+  getJobs,
+  getJob,
+  getCallbacks,
+  uploadFiles,
+  updateFile,
+  deleteFile,
+  retryFile,
+  downloadTranslations,
+} from '@/api/client'
 import { cn } from '@/lib/utils'
-import type { ProjectStatus, JobStatus } from '@/types'
+import type { Job, ProjectStatus, JobStatus } from '@/types'
 
 const PROJECT_STATUS: Record<ProjectStatus, { dot: string; text: string; bg: string }> = {
   ACTIVE:      { dot: 'bg-blue-500',   text: 'text-blue-400',   bg: 'bg-blue-500/10' },
@@ -166,6 +179,97 @@ function UploadFileModal({ projectId, onClose }: { projectId: string; onClose: (
   )
 }
 
+function EditFileModal({ projectId, job, onClose }: { projectId: string; job: Job; onClose: () => void }) {
+  const qc = useQueryClient()
+  const [fileName, setFileName] = useState(job.fileName)
+  const [sourceJson, setSourceJson] = useState(JSON.stringify(job.sourceContent ?? {}, null, 2))
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+
+    let sourceContent: Record<string, unknown>
+    try {
+      const parsed = JSON.parse(sourceJson)
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        setError('Source content must be a JSON object.')
+        return
+      }
+      sourceContent = parsed as Record<string, unknown>
+    } catch {
+      setError('Source content is not valid JSON.')
+      return
+    }
+
+    setLoading(true)
+    try {
+      await updateFile(projectId, job.id, { fileName: fileName.trim(), sourceContent })
+      qc.invalidateQueries({ queryKey: ['jobs', projectId] })
+      qc.invalidateQueries({ queryKey: ['job', job.id] })
+      qc.invalidateQueries({ queryKey: ['segments', job.id] })
+      onClose()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update file.'
+      setError(message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-[#13131f] border border-white/10 rounded-2xl p-6 w-full max-w-3xl shadow-2xl">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-base font-semibold text-gray-100 flex items-center gap-2">
+            <Pencil className="w-4 h-4 text-[#9b8fff]" /> Edit File
+          </h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <form onSubmit={submit} className="space-y-4">
+          <label className="block">
+            <span className="block text-xs text-gray-500 mb-1.5">File name</span>
+            <input
+              value={fileName}
+              onChange={(e) => setFileName(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none focus:border-[#7c6cfe]"
+            />
+          </label>
+
+          <label className="block">
+            <span className="block text-xs text-gray-500 mb-1.5">Source JSON</span>
+            <textarea
+              value={sourceJson}
+              onChange={(e) => setSourceJson(e.target.value)}
+              spellCheck={false}
+              className="w-full h-[420px] bg-[#0d0d16] border border-white/10 rounded-lg px-3 py-2 text-xs text-gray-200 font-mono outline-none focus:border-[#7c6cfe] resize-none"
+            />
+          </label>
+
+          {error && <p className="text-xs text-red-400">{error}</p>}
+
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-400 text-sm rounded-lg transition-colors">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !fileName.trim()}
+              className="px-4 py-2 bg-[#7c6cfe] hover:bg-[#6355e0] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
+            >
+              {loading ? 'Saving…' : 'Save and retranslate'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
@@ -178,6 +282,9 @@ function timeAgo(iso: string) {
 export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>()
   const [showUpload, setShowUpload] = useState(false)
+  const [editingJob, setEditingJob] = useState<Job | null>(null)
+  const [busyJobId, setBusyJobId] = useState<string | null>(null)
+  const qc = useQueryClient()
 
   const { data: project, isLoading: projectLoading } = useQuery({
     queryKey: ['project', projectId],
@@ -197,6 +304,42 @@ export function ProjectDetailPage() {
   })
 
   const projectCallbacks = allCallbacks?.filter((c) => c.projectId === projectId) ?? []
+
+  async function openEdit(jobId: string) {
+    setBusyJobId(jobId)
+    try {
+      const job = await getJob(jobId)
+      if (job) setEditingJob(job)
+    } finally {
+      setBusyJobId(null)
+    }
+  }
+
+  async function retryJob(jobId: string) {
+    setBusyJobId(jobId)
+    try {
+      await retryFile(projectId!, jobId)
+      qc.invalidateQueries({ queryKey: ['jobs', projectId] })
+      qc.invalidateQueries({ queryKey: ['job', jobId] })
+      qc.invalidateQueries({ queryKey: ['segments', jobId] })
+    } finally {
+      setBusyJobId(null)
+    }
+  }
+
+  async function removeJob(job: Job) {
+    const ok = window.confirm(`Delete ${job.fileName}? This removes its segments and translations.`)
+    if (!ok) return
+
+    setBusyJobId(job.id)
+    try {
+      await deleteFile(projectId!, job.id)
+      qc.invalidateQueries({ queryKey: ['project', projectId] })
+      qc.invalidateQueries({ queryKey: ['jobs', projectId] })
+    } finally {
+      setBusyJobId(null)
+    }
+  }
 
   if (projectLoading) {
     return (
@@ -223,6 +366,7 @@ export function ProjectDetailPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       {showUpload && <UploadFileModal projectId={projectId!} onClose={() => setShowUpload(false)} />}
+      {editingJob && <EditFileModal projectId={projectId!} job={editingJob} onClose={() => setEditingJob(null)} />}
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500">
         <Link to="/projects" className="flex items-center gap-1.5 hover:text-[#9b8fff] transition-colors">
@@ -429,11 +573,38 @@ export function ProjectDetailPage() {
                         {job.status === 'COMPLETED' && (
                           <button
                             onClick={() => downloadTranslations(projectId!, [job.id])}
+                            title="Download translation"
                             className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 transition-colors"
                           >
                             <Download className="w-3 h-3" />
                           </button>
                         )}
+                        {job.status === 'FAILED' && (
+                          <button
+                            onClick={() => retryJob(job.id)}
+                            disabled={busyJobId === job.id}
+                            title="Retry failed file"
+                            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 disabled:opacity-40 transition-colors"
+                          >
+                            <RotateCcw className={cn('w-3 h-3', busyJobId === job.id && 'animate-spin')} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => openEdit(job.id)}
+                          disabled={busyJobId === job.id}
+                          title="Edit source file"
+                          className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 disabled:opacity-40 transition-colors"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => removeJob(job)}
+                          disabled={busyJobId === job.id}
+                          title="Delete file"
+                          className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-red-400 disabled:opacity-40 transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
                         <Link
                           to={`/projects/${project.id}/jobs/${job.id}/segments`}
                           className="inline-flex items-center gap-1 text-xs text-[#9b8fff] hover:text-[#b3a9ff] transition-colors"

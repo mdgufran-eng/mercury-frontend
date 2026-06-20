@@ -69,7 +69,7 @@ export function SegmentsPage() {
     enabled: !!jobId,
   })
 
-  const { data: segments, isLoading, refetch: refetchSegments } = useQuery({
+  const { data: segments, isLoading } = useQuery({
     queryKey: ['segments', jobId],
     queryFn: () => getSegments(projectId!, jobId!),
     enabled: !!jobId && !!projectId,

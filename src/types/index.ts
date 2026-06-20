@@ -40,6 +40,8 @@ export interface Job {
   id: string
   projectId: string
   fileName: string
+  sourceContent?: Record<string, unknown>
+  sourceHash?: string
   sourceLang: string
   targetLang: string
   status: JobStatus
