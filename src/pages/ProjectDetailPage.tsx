@@ -29,6 +29,8 @@ import {
   deleteFile,
   retryFile,
   downloadTranslations,
+  forceCompleteProject,
+  changeProjectStatus,
 } from '@/api/client'
 import { cn } from '@/lib/utils'
 import type { Job, ProjectStatus, JobStatus } from '@/types'
@@ -279,6 +281,91 @@ function timeAgo(iso: string) {
   return `${Math.floor(hrs / 24)}d ago`
 }
 
+// ── Status Controls ────────────────────────────────────────────────────────────
+function StatusControls({
+  projectId,
+  currentStatus,
+  onChanged,
+}: {
+  projectId: string
+  currentStatus: string
+  onChanged: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const statuses: ProjectStatus[] = ['CREATED', 'ACTIVE', 'IN_PROGRESS', 'FINISHED', 'FAILED']
+
+  async function handleForceComplete() {
+    if (!window.confirm('Mark project as FINISHED and fire project-completion callback?')) return
+    setLoading(true)
+    try {
+      await forceCompleteProject(projectId)
+      onChanged()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleStatusChange(status: ProjectStatus) {
+    setOpen(false)
+    setLoading(true)
+    try {
+      await changeProjectStatus(projectId, status)
+      onChanged()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 relative">
+      {/* Force Complete — primary action for HUMAN testing */}
+      {currentStatus !== 'FINISHED' && (
+        <button
+          onClick={handleForceComplete}
+          disabled={loading}
+          className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg transition-colors disabled:opacity-50"
+          title="Mark project FINISHED and fire project-completion callback"
+        >
+          <CheckCircle2 className="w-3 h-3" />
+          Force Complete
+        </button>
+      )}
+
+      {/* Status dropdown */}
+      <div className="relative">
+        <button
+          onClick={() => setOpen((o) => !o)}
+          disabled={loading}
+          className="flex items-center gap-1 text-xs px-2 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 rounded-lg transition-colors disabled:opacity-50"
+          title="Change project status"
+        >
+          {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Clock className="w-3 h-3" />}
+          Status
+        </button>
+        {open && (
+          <div className="absolute right-0 top-full mt-1 z-50 bg-[#1a1a2e] border border-white/10 rounded-lg shadow-xl overflow-hidden min-w-[140px]">
+            {statuses.map((s) => (
+              <button
+                key={s}
+                onClick={() => handleStatusChange(s)}
+                className={cn(
+                  'w-full text-left px-3 py-2 text-xs transition-colors',
+                  s === currentStatus
+                    ? 'bg-[#7c6cfe]/10 text-[#9b8fff]'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200',
+                )}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>()
   const [showUpload, setShowUpload] = useState(false)
@@ -383,10 +470,14 @@ export function ProjectDetailPage() {
           <h1 className="text-xl font-semibold text-gray-100">{project.name}</h1>
           <p className="text-xs font-mono text-gray-600 mt-0.5">{project.id}</p>
         </div>
-        <span className={cn('flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full shrink-0', ps.bg, ps.text)}>
-          <span className={cn('w-1.5 h-1.5 rounded-full', ps.dot)} />
-          {project.status}
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={cn('flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full', ps.bg, ps.text)}>
+            <span className={cn('w-1.5 h-1.5 rounded-full', ps.dot)} />
+            {project.status}
+          </span>
+          {/* Status controls */}
+          <StatusControls projectId={project.id} currentStatus={project.status} onChanged={() => qc.invalidateQueries({ queryKey: ['project', projectId] })} />
+        </div>
       </div>
 
       {/* Info grid + progress */}

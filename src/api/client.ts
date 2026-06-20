@@ -283,3 +283,15 @@ export const getTemplates = async () => {
     return []
   }
 }
+
+// --- Project status controls ---
+export const forceCompleteProject = async (projectId: string): Promise<void> => {
+  await httpClient.post(`/admin/api/projects/${projectId}/force-complete`)
+}
+
+export const changeProjectStatus = async (
+  projectId: string,
+  status: 'CREATED' | 'ACTIVE' | 'IN_PROGRESS' | 'FINISHED' | 'FAILED',
+): Promise<void> => {
+  await httpClient.patch(`/admin/api/projects/${projectId}/status`, { status })
+}
