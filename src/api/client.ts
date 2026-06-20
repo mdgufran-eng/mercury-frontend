@@ -295,3 +295,31 @@ export const changeProjectStatus = async (
 ): Promise<void> => {
   await httpClient.patch(`/admin/api/projects/${projectId}/status`, { status })
 }
+
+// --- Cost & PO ---
+export interface CostAndPO {
+  costId: number
+  totalWords: number
+  billableWords: number
+  ratePerWord: number
+  amount: number
+  currency: string
+  vendor: { name: string; email: string }
+  po: {
+    poId: number
+    processId: string
+    amount: number
+    currency: string
+    createdAt: string
+  } | null
+  createdAt: string
+}
+
+export const getCostAndPO = async (projectId: string): Promise<CostAndPO | null> => {
+  try {
+    const { data } = await httpClient.get(`/admin/api/projects/${projectId}/costs`)
+    return data
+  } catch {
+    return null
+  }
+}

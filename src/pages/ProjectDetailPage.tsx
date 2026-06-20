@@ -31,6 +31,8 @@ import {
   downloadTranslations,
   forceCompleteProject,
   changeProjectStatus,
+  getCostAndPO,
+  type CostAndPO,
 } from '@/api/client'
 import { cn } from '@/lib/utils'
 import type { Job, ProjectStatus, JobStatus } from '@/types'
@@ -390,6 +392,12 @@ export function ProjectDetailPage() {
     queryFn: getCallbacks,
   })
 
+  const { data: costAndPO } = useQuery<CostAndPO | null>({
+    queryKey: ['costs', projectId],
+    queryFn: () => getCostAndPO(projectId!),
+    enabled: !!projectId,
+  })
+
   const projectCallbacks = allCallbacks?.filter((c) => c.projectId === projectId) ?? []
 
   async function openEdit(jobId: string) {
@@ -743,6 +751,46 @@ export function ProjectDetailPage() {
           >
             View all callbacks <ArrowRight className="w-3 h-3" />
           </Link>
+        </div>
+      )}
+
+      {/* Cost & Purchase Order */}
+      {costAndPO && (
+        <div className="bg-[#13131f] border border-white/5 rounded-xl p-5">
+          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-4">
+            Cost &amp; Purchase Order
+          </h2>
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
+            <div>
+              <dt className="text-xs text-gray-600">Billable Words</dt>
+              <dd className="text-gray-200 font-medium mt-0.5">{costAndPO.billableWords.toLocaleString()}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-gray-600">Rate / word</dt>
+              <dd className="text-gray-200 font-medium mt-0.5">${costAndPO.ratePerWord.toFixed(3)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-gray-600">Total Amount</dt>
+              <dd className="text-green-400 font-bold mt-0.5 text-base">
+                ${costAndPO.amount.toFixed(2)} {costAndPO.currency}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-gray-600">Vendor</dt>
+              <dd className="text-gray-200 font-medium mt-0.5">{costAndPO.vendor.name}</dd>
+            </div>
+          </dl>
+          {costAndPO.po && (
+            <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600">Purchase Order</p>
+                <p className="text-gray-200 font-mono text-sm mt-0.5">{costAndPO.po.processId}</p>
+              </div>
+              <span className="text-xs text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-full">
+                Generated
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>
